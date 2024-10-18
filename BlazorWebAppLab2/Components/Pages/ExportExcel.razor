@@ -1,0 +1,108 @@
+﻿@page "/exportexcel"
+@* @attribute [Authorize(Roles = "Administrator")] *@
+
+@using ClosedXML.Excel
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppLab2.Data
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@implements IAsyncDisposable
+
+@inject IJSRuntime js
+
+<button type="button" class="btn btn-success mb-2" @onclick="@ExportXLS">Экспорт всех таблиц в Excel</button>
+
+@code {
+
+    ApplicationDbContext context = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+
+    public async Task ExportXLS()
+    {
+        var XLSStream = ExportXLSRezult();
+
+        await js.InvokeVoidAsync("BlazorDownloadFile", "Подарки.xlsx", XLSStream);
+    }
+
+    private byte[] ExportXLSRezult()
+    {
+        using var workbook = new XLWorkbook();
+
+        var worksheet1 = workbook.Worksheets.Add("Workers");
+        worksheet1.Cell(1, 1).Value = "WorkerId";
+        worksheet1.Cell(1, 2).Value = "LastName";
+        worksheet1.Cell(1, 3).Value = "FirstName";
+        worksheet1.Cell(1, 4).Value = "SecondName";
+        worksheet1.Cell(1, 5).Value = "JobTitle";
+        worksheet1.Cell(1, 6).Value = "Division";
+        worksheet1.Cell(1, 7).Value = "DateJob";
+
+        worksheet1.Row(1).Style.Font.Bold = true;
+
+        int i = 2;
+        foreach (var rez in context.Workers)
+        {
+            worksheet1.Cell(i, 1).Value = rez.WorkerId;
+            worksheet1.Cell(i, 2).Value = rez.LastName;
+            worksheet1.Cell(i, 3).Value = rez.FirstName;
+            worksheet1.Cell(i, 4).Value = rez.SecondName;
+            worksheet1.Cell(i, 5).Value = rez.JobTitle;
+            worksheet1.Cell(i, 6).Value = rez.Division;
+            worksheet1.Cell(i, 7).Value = rez.DateJob.ToString();
+            i++;
+        }
+
+        var worksheet2 = workbook.Worksheets.Add("ChildWorkers");
+        worksheet2.Cell(1, 1).Value = "ChildWorkerId";
+        worksheet2.Cell(1, 2).Value = "ChildName";
+        worksheet2.Cell(1, 3).Value = "DateBirth";
+        worksheet2.Cell(1, 4).Value = "WorkerId";
+
+        worksheet2.Row(1).Style.Font.Bold = true;
+
+        i = 2;
+        foreach (var rez in context.ChildWorkers)
+        {
+            worksheet2.Cell(i, 1).Value = rez.ChildWorkerId;
+            worksheet2.Cell(i, 2).Value = rez.ChildName;
+            worksheet2.Cell(i, 3).Value = rez.DateBirth.ToString();
+            worksheet2.Cell(i, 4).Value = rez.WorkerId;
+            
+            i++;
+        }
+
+        var worksheet3 = workbook.Worksheets.Add("Presents");
+        worksheet3.Cell(1, 1).Value = "PresentId";
+        worksheet3.Cell(1, 2).Value = "DatePresent";
+        worksheet3.Cell(1, 3).Value = "Cost";
+        worksheet3.Cell(1, 4).Value = "ChildWorkerId";
+
+        worksheet3.Row(1).Style.Font.Bold = true;
+
+        i = 2;
+        foreach (var rez in context.Presents)
+        {
+            worksheet3.Cell(i, 1).Value = rez.PresentId;
+            worksheet3.Cell(i, 2).Value = rez.DatePresent.ToString();
+            worksheet3.Cell(i, 3).Value = rez.Cost;
+            worksheet3.Cell(i, 4).Value = rez.ChildWorkerId;
+            i++;
+        }
+
+        MemoryStream XLSStream = new();
+        workbook.SaveAs(XLSStream);
+
+        return XLSStream.ToArray();
+
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+
+
+
+}

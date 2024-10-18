@@ -1,0 +1,41 @@
+﻿@page "/workers"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using BlazorWebAppLab2.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Сотрудник</PageTitle>
+
+<h1>Сотрудник</h1>
+
+<p>
+    <a href="workers/create">Добавить нового</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Workers">
+    <PropertyColumn Title ="Фамилия" Property="worker => worker.LastName" />
+    <PropertyColumn Title="Имя" Property="worker => worker.FirstName" />
+    <PropertyColumn Title="Отчество" Property="worker => worker.SecondName" />
+    <PropertyColumn Title="Должность" Property="worker => worker.JobTitle" />
+    <PropertyColumn Title="Подразделение" Property="worker => worker.Division" />
+    <PropertyColumn Title="Дата приема" Property="worker => worker.DateJob" />
+
+    <TemplateColumn Context="worker">
+        <a href="@($"childworkers?workerid={worker.WorkerId}")">Дети</a> |
+        <a href="@($"workers/edit?workerid={worker.WorkerId}")">Редактировать</a> |
+        <a href="@($"workers/details?workerid={worker.WorkerId}")">Детали</a> |
+        <a href="@($"workers/delete?workerid={worker.WorkerId}")">Удалить</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

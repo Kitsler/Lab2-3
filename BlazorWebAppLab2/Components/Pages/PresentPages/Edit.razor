@@ -1,0 +1,99 @@
+﻿@page "/presents/edit"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppLab2.Data
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Редактировать подарок</PageTitle>
+
+<h1>Редактировать подарок</h1>
+
+<h2>Подарок</h2>
+<hr />
+@if (Present is null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Present" OnValidSubmit="UpdatePresent" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Present.PresentId" value="@Present.PresentId" />
+                <div class="mb-3">
+                    <label for="datepresent" class="form-label">Дата подарка:</label>
+                    <InputDate id="datepresent" @bind-Value="Present.DatePresent" class="form-control" />
+                    <ValidationMessage For="() => Present.DatePresent" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="cost" class="form-label">цена:</label>
+                    <InputNumber id="cost" @bind-Value="Present.Cost" class="form-control" />
+                    <ValidationMessage For="() => Present.Cost" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="childworkerid" class="form-label">Id ребенка:</label>
+                    <InputNumber id="childworkerid" @bind-Value="Present.ChildWorkerId" class="form-control" />
+                    <ValidationMessage For="() => Present.ChildWorkerId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/presents">Назад к списку</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int PresentId { get; set; }
+
+    [SupplyParameterFromForm]
+    private Present? Present { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Present ??= await context.Presents.FirstOrDefaultAsync(m => m.PresentId == PresentId);
+
+        if (Present is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdatePresent()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Present!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!PresentExists(Present!.PresentId))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/presents");
+    }
+
+    private bool PresentExists(int presentid)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Presents.Any(e => e.PresentId == presentid);
+    }
+}

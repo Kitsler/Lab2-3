@@ -1,0 +1,57 @@
+﻿@page "/presents"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using BlazorWebAppLab2.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Подарки</PageTitle>
+
+<h1>Подарки</h1>
+
+<p>
+    <a href="presents/create?childworkerid=@ChildworkerId">Добавить новый подарок</a>
+</p>
+
+<QuickGrid Class="table" Items="istest? context.Presents : context.Presents.Where(c=>c.ChildWorkerId==ChildworkerId)">
+    <PropertyColumn Title = "Дата подарка" Property="present => present.DatePresent" />
+    <PropertyColumn Title = "Цена" Property="present => present.Cost" />
+    <PropertyColumn Title = "ID ребенка" Property="present => present.ChildWorkerId" />
+
+    <TemplateColumn Context="present">
+        <a href="@($"presents/edit?presentid={present.PresentId}")">Редактировать</a> |
+        <a href="@($"presents/details?presentid={present.PresentId}")">Детали</a> |
+        <a href="@($"presents/delete?presentid={present.PresentId}")">Удалить</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? ChildworkerId { get; set; }
+
+    bool istest = false;
+
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+        if (ChildworkerId == null)
+        {
+            istest = true;
+            //NavigationManager.NavigateTo("not found");
+        }
+        {
+            ChildWorker? childworker = context.ChildWorkers.FirstOrDefault(d => d.ChildWorkerId == ChildworkerId);
+
+            if (childworker == null)
+            {
+                //NavigationManager.NavigateTo("not found");
+            }
+
+            //WorkerLastName = worker?.LastName;
+        }
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

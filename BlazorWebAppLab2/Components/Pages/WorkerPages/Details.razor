@@ -1,0 +1,56 @@
+﻿@page "/workers/details"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppLab2.Data
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Детали сотрудника</PageTitle>
+
+<h1>Детали сотрудника</h1>
+
+<div>
+    <h2>Сотрудник</h2>
+    <hr />
+    @if (worker is null)
+    {
+        <p><em>Загрузка...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Фамилия</dt>
+            <dd class="col-sm-10">@worker.LastName</dd>
+            <dt class="col-sm-2">Имя</dt>
+            <dd class="col-sm-10">@worker.FirstName</dd>
+            <dt class="col-sm-2">Отчество</dt>
+            <dd class="col-sm-10">@worker.SecondName</dd>
+            <dt class="col-sm-2">Должность</dt>
+            <dd class="col-sm-10">@worker.JobTitle</dd>
+            <dt class="col-sm-2">Подразделение</dt>
+            <dd class="col-sm-10">@worker.Division</dd>
+            <dt class="col-sm-2">Дата приема</dt>
+            <dd class="col-sm-10">@worker.DateJob</dd>
+        </dl>
+        <div>
+            <a href="@($"/workers/edit?workerid={worker.WorkerId}")">Редактировать</a> |
+            <a href="@($"/workers")">Назад к списку</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Worker? worker;
+
+    [SupplyParameterFromQuery]
+    private int WorkerId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        worker = await context.Workers.FirstOrDefaultAsync(m => m.WorkerId == WorkerId);
+
+        if (worker is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

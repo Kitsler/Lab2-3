@@ -1,0 +1,68 @@
+﻿@page "/childworkers/create"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppLab2.Data
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Добавить ребенка</PageTitle>
+
+<h1>Добавить Ребенка</h1>
+
+<h2>Дети</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="ChildWorker" OnValidSubmit="AddChildWorker" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="childname" class="form-label">Имя ребенка:</label> 
+                <InputText id="childname" @bind-Value="ChildWorker.ChildName" class="form-control" /> 
+                <ValidationMessage For="() => ChildWorker.ChildName" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="datebirth" class="form-label">Дата рождения:</label> 
+                <InputDate id="datebirth" @bind-Value="ChildWorker.DateBirth" class="form-control" /> 
+                <ValidationMessage For="() => ChildWorker.DateBirth" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="workerid" class="form-label">ID сотрудника:</label>
+                <InputNumber type="hidden" readonly="@IsDisabled" id="workerid" @bind-Value="ChildWorker.WorkerId" class="form-control" />
+                <ValidationMessage For="() => ChildWorker.WorkerId" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Добавить</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/childworkers">Назад к списку</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? WorkerId { get; set; }
+
+    [SupplyParameterFromForm]
+    public ChildWorker ChildWorker { get; set; } = new();
+
+    protected bool IsDisabled = false;
+    //<label for="workerid" class="form-label">ID сотрудника:</label>
+    protected override async Task OnInitializedAsync()
+    {
+        if (WorkerId != null)
+        {
+            IsDisabled = true;
+            ChildWorker.WorkerId = WorkerId;
+        }
+    }
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddChildWorker()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.ChildWorkers.Add(ChildWorker);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/childworkers?workerid="+(WorkerId!=null ? WorkerId.ToString() : ""));
+    }
+}

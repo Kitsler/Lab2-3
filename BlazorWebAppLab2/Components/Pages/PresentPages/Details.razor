@@ -1,0 +1,50 @@
+﻿@page "/presents/details"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppLab2.Data
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Детали подарка</PageTitle>
+
+<h1>Детали подарка</h1>
+
+<div>
+    <h2>Подарок</h2>
+    <hr />
+    @if (present is null)
+    {
+        <p><em>Загрузка...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Дата подарка</dt>
+            <dd class="col-sm-10">@present.DatePresent</dd>
+            <dt class="col-sm-2">Цена</dt>
+            <dd class="col-sm-10">@present.Cost</dd>
+            <dt class="col-sm-2">Id ребенка</dt>
+            <dd class="col-sm-10">@present.ChildWorkerId</dd>
+        </dl>
+        <div>
+            <a href="@($"/presents/edit?presentid={present.PresentId}")">Редактировать</a> |
+            <a href="@($"/presents")">Назад к списку</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Present? present;
+
+    [SupplyParameterFromQuery]
+    private int PresentId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        present = await context.Presents.FirstOrDefaultAsync(m => m.PresentId == PresentId);
+
+        if (present is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

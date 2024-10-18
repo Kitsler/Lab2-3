@@ -1,0 +1,50 @@
+﻿@page "/childworkers/details"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppLab2.Data
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Детали</PageTitle>
+
+<h1>Детали</h1>
+
+<div>
+    <h2>Дети</h2>
+    <hr />
+    @if (childworker is null)
+    {
+        <p><em>Загрузка...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Имя ребенка</dt>
+            <dd class="col-sm-10">@childworker.ChildName</dd>
+            <dt class="col-sm-2">Дата рождения</dt>
+            <dd class="col-sm-10">@childworker.DateBirth</dd>
+            <dt class="col-sm-2">Id Сотрудника</dt>
+            <dd class="col-sm-10">@childworker.WorkerId</dd>
+        </dl>
+        <div>
+            <a href="@($"/childworkers/edit?childworkerid={childworker.ChildWorkerId}")">Редактировать</a> |
+            <a href="@($"/childworkers")">Назад к списку</a>
+        </div>
+    }
+</div>
+
+@code {
+    private ChildWorker? childworker;
+
+    [SupplyParameterFromQuery]
+    private int ChildWorkerId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        childworker = await context.ChildWorkers.FirstOrDefaultAsync(m => m.ChildWorkerId == ChildWorkerId);
+
+        if (childworker is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

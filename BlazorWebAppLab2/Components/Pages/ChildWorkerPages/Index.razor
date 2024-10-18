@@ -1,0 +1,68 @@
+﻿@page "/childworkers"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using BlazorWebAppLab2.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Дети Сотрудников</PageTitle>
+
+<h1>Дети сотрудников</h1>
+
+<p>
+    <a href="childworkers/create?workerid=@WorkerId">Добавить нового ребенка</a>
+</p>
+
+<p>
+    <a href="workers">Возврат к списку работников</a>
+</p>
+
+<QuickGrid Class="table" Items="istest? context.ChildWorkers : context.ChildWorkers.Where(c=>c.WorkerId==WorkerId)">
+    <PropertyColumn Title = "Имя ребенка" Property="childworker => childworker.ChildName" />
+    <PropertyColumn Title = "Дата рождения" Property="childworker => childworker.DateBirth" />
+    <PropertyColumn Title = "ID сотрудника" Property="childworker => childworker.WorkerId" />
+
+    <TemplateColumn Context="childworker">
+        <a href="@($"presents?childworkerid={childworker.ChildWorkerId}")">Подарки</a> |
+        <a href="@($"childworkers/edit?childworkerid={childworker.ChildWorkerId}")">Редактировать</a> |
+        <a href="@($"childworkers/details?childworkerid={childworker.ChildWorkerId}")">Детали</a> |
+        <a href="@($"childworkers/delete?childworkerid={childworker.ChildWorkerId}")">Удалить</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? WorkerId { get; set; }
+
+    public string? WorkerLastName { get; set; }
+
+    bool istest = false;
+
+    ApplicationDbContext context = default!;
+    //var test = default!;
+
+    //context.ChildWorkers.Where(c=>c.WorkerId==WorkerId)
+    //istest? context.ChildWorkers : context.ChildWorkers.Where(c=>c.WorkerId==WorkerId)
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+        if (WorkerId == null)
+        {
+            istest = true;
+            //NavigationManager.NavigateTo("not found");
+        }
+        {
+            Worker? worker = context.Workers.FirstOrDefault(d => d.WorkerId == WorkerId);
+
+            if (worker == null)
+            {
+                //NavigationManager.NavigateTo("not found");
+            }
+
+            WorkerLastName = worker?.LastName;
+        }
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

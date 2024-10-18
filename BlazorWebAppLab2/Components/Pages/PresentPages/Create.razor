@@ -1,0 +1,67 @@
+﻿@page "/presents/create"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppLab2.Data
+@inject IDbContextFactory<BlazorWebAppLab2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Добавить Подарок</PageTitle>
+
+<h1>Добавить подарок</h1>
+
+<h2>Подарок</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Present" OnValidSubmit="AddPresent" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="datepresent" class="form-label">Дата подарка:</label> 
+                <InputDate id="datepresent" @bind-Value="Present.DatePresent" class="form-control" /> 
+                <ValidationMessage For="() => Present.DatePresent" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="cost" class="form-label">Цена:</label> 
+                <InputNumber id="cost" @bind-Value="Present.Cost" class="form-control" /> 
+                <ValidationMessage For="() => Present.Cost" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="childworkerid" class="form-label">ID ребенка:</label> 
+                <InputNumber id="childworkerid" readonly="@IsDisabled" @bind-Value="Present.ChildWorkerId" class="form-control" />
+                <ValidationMessage For="() => Present.ChildWorkerId" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Добавить</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/presents">Назад к списку</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int? ChildWorkerId { get; set; }
+
+    protected bool IsDisabled = false;
+
+    [SupplyParameterFromForm]
+    private Present Present { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ChildWorkerId != null)
+        {
+            IsDisabled = true;
+            Present.ChildWorkerId = ChildWorkerId;
+        }
+    }
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddPresent()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Presents.Add(Present);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/presents?childworkerid=" + (ChildWorkerId != null ? ChildWorkerId.ToString() : ""));
+    }
+}
